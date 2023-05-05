@@ -31,7 +31,7 @@ struct Handler;
 #[async_trait]
 impl EventHandler for Handler {
     async fn message(&self, ctx: Context, msg: Message) {
-        if msg.content == "!clima madrid" {
+        if msg.content.starts_with("!clima") {
             let city = msg.content.trim_start_matches("!clima ");
             let api_key: String =
                 env::var("OPENWEATHER_API_KEY").expect("expected OPENWEATHER_API_KEY");
