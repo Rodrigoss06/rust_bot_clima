@@ -18,6 +18,7 @@ struct OpenWeatherResponse {
 
 #[derive(Deserialize)]
 struct Weather {
+    icon: String,
     description: String,
 }
 
@@ -25,6 +26,7 @@ struct Weather {
 struct Main {
     temp: f32,
     feels_like: f32,
+    humidity: f32
 }
 struct Handler;
 
@@ -41,6 +43,7 @@ impl EventHandler for Handler {
                 city, api_key
             );
 
+
             let res = reqwest::get(url).await;
             let body = match res {
                 Ok(res) => match res.json::<OpenWeatherResponse>().await {
@@ -55,9 +58,13 @@ impl EventHandler for Handler {
                     return;
                 }
             };
+            let weather_icon = format!("https://openweathermap.org/img/w/{}.png", body.weather[0].icon);
+
+
             let weather_description = body.weather[0].description.clone();
             let temperature = body.main.temp;
             let feels_like = body.main.feels_like;
+            let humidity = body.main.humidity;
 
             let mut embed = CreateEmbed::default();
             embed.title(format!("Weather in {}", city));
@@ -71,13 +78,14 @@ impl EventHandler for Handler {
             if let Err(why) = msg
                 .channel_id
                 .send_message(&ctx.http, |m| {
-                    m.content("test").embed(|e| {
+                    m.embed(|e| {
                         e.title(format!("El clima en {}", city))
                         .description(format!(
-                            "Current weather: {}\nTemperature: {:.1}°C\nFeels like: {:.1}°C",
-                            weather_description, temperature, feels_like
+                            "Clima actual: {}\nTemperatura: {:.1}°C\nSensación térmica de: {:.1}°C\nHumedad en el aire: {}%",
+                            weather_description, temperature, feels_like, humidity
                         ))
                         .color(0x00FF00)
+                        .thumbnail(weather_icon)
                     })
                 })
                 .await
